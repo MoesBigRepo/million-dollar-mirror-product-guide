@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<!-- Canonical product guide HTML. Update this file and product-guide.md in this folder whenever the product gains or changes a feature or function. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <meta
+    name="description"
+    content="A structured product explanation interface for Million Dollar Mirror, a local-first behavioral operating system for daily execution."
+  />
+  <title>Million Dollar Mirror — Product Architecture Guide</title>
+  <style>
+    :root {
+      --bg: #07111a;
+      --bg-elevated: #0d1723;
+      --bg-panel: #101b29;
+      --bg-panel-2: #0d1621;
+      --bg-panel-3: #132131;
+      --text: #f3f7fb;
+      --text-soft: #c7d3df;
+      --text-muted: #8ea1b3;
+      --line: rgba(173, 196, 219, 0.14);
+      --line-strong: rgba(173, 196, 219, 0.24);
+      --accent: #74e3ff;
+      --accent-strong: #9bf1ff;
+      --accent-warm: #ffbf78;
+      --accent-green: #7ee6bf;
+      --accent-rose: #ff8ea8;
+      --shadow: 0 18px 60px rgba(0, 0, 0, 0.32);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --content: 1440px;
+      --gutter: clamp(18px, 2vw, 32px);
+      --section-space: clamp(64px, 8vw, 104px);
+      --card-space: 18px;
+      --body-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --display-font: ui-serif, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      --mono-font: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: var(--body-font);
+      background:
+        radial-gradient(circle at 12% 12%, rgba(116, 227, 255, 0.12), transparent 24rem),
+        radial-gradient(circle at 82% 16%, rgba(255, 191, 120, 0.08), transparent 22rem),
+        linear-gradient(180deg, #07111a 0%, #08131d 42%, #060f17 100%);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.82), transparent 92%);
+      opacity: 0.45;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent-strong);
+      outline-offset: 4px;
+      border-radius: 10px;
+    }
+
+    .shell {
+      position: relative;
+      max-width: var(--content);
+      margin: 0 auto;
+      padding: 28px var(--gutter) 56px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      padding: clamp(28px, 4vw, 44px);
+      background:
+        radial-gradient(circle at top left, rgba(116, 227, 255, 0.14), transparent 34%),
+        linear-gradient(145deg, rgba(14, 24, 37, 0.95), rgba(8, 15, 24, 0.92));
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -10% -12% 48%;
+      height: 16rem;
+      background: radial-gradient(circle, rgba(116, 227, 255, 0.1), transparent 72%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      border: 1px solid rgba(116, 227, 255, 0.24);
+      border-radius: 999px;
+      background: rgba(116, 227, 255, 0.07);
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: var(--display-font);
+      font-size: clamp(2.6rem, 5vw, 5rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .hero .subtitle {
+      margin: 18px 0 12px;
+      max-width: 68ch;
+      color: var(--text-soft);
+      font-size: clamp(1.08rem, 1.5vw, 1.28rem);
+    }
+
+    .hero .summary {
+      max-width: 72ch;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .hero-panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      background: linear-gradient(180deg, rgba(16, 27, 41, 0.95), rgba(10, 17, 26, 0.93));
+    }
+
+    .hero-panel h2,
+    section h2 {
+      margin: 0 0 10px;
+      font-family: var(--display-font);
+      font-size: clamp(1.6rem, 2vw, 2.2rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .hero-panel p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 0.98rem;
+    }
+
+    .tag-row,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 32px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-soft);
+      font-size: 0.82rem;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .chip strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .chip.implemented {
+      border-color: rgba(126, 230, 191, 0.26);
+      background: rgba(126, 230, 191, 0.08);
+      color: #cff8e8;
+    }
+
+    .chip.inferred {
+      border-color: rgba(255, 191, 120, 0.26);
+      background: rgba(255, 191, 120, 0.08);
+      color: #ffe2bc;
+    }
+
+    .chip.open {
+      border-color: rgba(255, 142, 168, 0.26);
+      background: rgba(255, 142, 168, 0.08);
+      color: #ffd2dc;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      gap: 26px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      background: rgba(10, 18, 27, 0.9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .toc h2 {
+      margin: 0 0 12px;
+      font-size: 0.95rem;
+      font-family: var(--body-font);
+      color: var(--text-soft);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .toc ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.94rem;
+      transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+      border: 1px solid transparent;
+    }
+
+    .toc a:hover,
+    .toc a.is-active {
+      background: rgba(116, 227, 255, 0.08);
+      color: var(--text);
+      border-color: rgba(116, 227, 255, 0.14);
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    section {
+      scroll-margin-top: 26px;
+      margin-bottom: var(--section-space);
+    }
+
+    .section-head {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .section-label {
+      color: var(--accent-strong);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .section-intro {
+      max-width: 76ch;
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: clamp(18px, 2vw, 24px);
+      background: linear-gradient(180deg, rgba(15, 26, 39, 0.94), rgba(10, 17, 26, 0.94));
+      box-shadow: var(--shadow);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4,
+    .stat-grid,
+    .card-grid {
+      display: grid;
+      gap: var(--card-space);
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3,
+    .stat-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4,
+    .card-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .stat-card,
+    .role-card,
+    .feature-card,
+    .benefit-card,
+    .risk-card,
+    .entity-card,
+    .ia-card,
+    .logic-card {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      background:
+        linear-gradient(180deg, rgba(19, 33, 49, 0.82), rgba(10, 17, 26, 0.88));
+    }
+
+    .stat-card h3,
+    .role-card h3,
+    .feature-card h3,
+    .benefit-card h3,
+    .risk-card h3,
+    .entity-card h3,
+    .ia-card h3,
+    .logic-card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .kicker {
+      display: inline-block;
+      margin-bottom: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.72rem;
+      font-weight: 800;
+    }
+
+    .stat-card p,
+    .role-card p,
+    .feature-card p,
+    .benefit-card p,
+    .risk-card p,
+    .entity-card p,
+    .ia-card p,
+    .logic-card p,
+    .flow-step p {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 0.96rem;
+    }
+
+    .metric {
+      margin-top: 12px;
+      color: var(--text);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .compare-block {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .compare-block strong {
+      color: var(--text);
+    }
+
+    .list {
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 10px;
+    }
+
+    .list li {
+      padding-left: 18px;
+      position: relative;
+      color: var(--text-soft);
+      font-size: 0.95rem;
+    }
+
+    .list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.68em;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(116, 227, 255, 0.1);
+      transform: translateY(-50%);
+    }
+
+    .subtle {
+      color: var(--text-muted);
+    }
+
+    .feature-group {
+      margin-top: 28px;
+    }
+
+    .feature-group:first-of-type {
+      margin-top: 0;
+    }
+
+    .feature-group-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .feature-group-head h3 {
+      margin: 0;
+      font-size: 1.32rem;
+      letter-spacing: -0.02em;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .feature-meta {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .feature-meta div {
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
+
+    .feature-meta strong {
+      color: var(--text);
+    }
+
+    .logic-rail {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .logic-card {
+      min-height: 100%;
+    }
+
+    .logic-card .step {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 12px;
+      border-radius: 50%;
+      background: rgba(116, 227, 255, 0.12);
+      border: 1px solid rgba(116, 227, 255, 0.22);
+      color: var(--accent-strong);
+      font-weight: 800;
+      font-size: 0.88rem;
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .timeline {
+      position: relative;
+      display: grid;
+      gap: 16px;
+      padding-left: 18px;
+    }
+
+    .timeline::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 12px;
+      bottom: 12px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(116, 227, 255, 0.46), rgba(255, 191, 120, 0.26));
+    }
+
+    .flow-step {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px 18px 18px 24px;
+      background: linear-gradient(180deg, rgba(17, 29, 43, 0.92), rgba(9, 16, 24, 0.9));
+    }
+
+    .flow-step::before {
+      content: attr(data-step);
+      position: absolute;
+      left: -18px;
+      top: 18px;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(116, 227, 255, 0.24);
+      background: #0f1e2c;
+      color: var(--accent-strong);
+      font-weight: 800;
+      font-size: 0.86rem;
+      box-shadow: 0 0 0 6px rgba(7, 17, 26, 0.95);
+    }
+
+    .flow-step h3 {
+      margin: 0 0 8px;
+      font-size: 1.04rem;
+    }
+
+    .ia-grid,
+    .entity-grid,
+    .risk-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .screen-map {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .screen-node {
+      position: relative;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(16, 29, 44, 0.94), rgba(11, 18, 27, 0.92));
+      min-height: 188px;
+    }
+
+    .screen-node::after {
+      content: "";
+      position: absolute;
+      right: -10px;
+      top: 50%;
+      width: 20px;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(116, 227, 255, 0.36), transparent);
+      transform: translateY(-50%);
+    }
+
+    .screen-node:last-child::after {
+      display: none;
+    }
+
+    .entity-graph {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .graph-row {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+    }
+
+    .graph-node {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      min-height: 112px;
+    }
+
+    .graph-node.center {
+      background: linear-gradient(180deg, rgba(116, 227, 255, 0.12), rgba(255, 255, 255, 0.03));
+      border-color: rgba(116, 227, 255, 0.2);
+    }
+
+    .graph-node h4 {
+      margin: 0 0 6px;
+      font-size: 0.98rem;
+    }
+
+    .graph-node p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    .note-panel {
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      padding: 18px 20px;
+      background:
+        linear-gradient(180deg, rgba(255, 191, 120, 0.08), rgba(255, 255, 255, 0.02));
+      color: var(--text-soft);
+    }
+
+    .summary-band {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .summary-panel {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+      background: linear-gradient(180deg, rgba(15, 26, 39, 0.95), rgba(9, 16, 24, 0.95));
+    }
+
+    .summary-panel h3 {
+      margin: 0 0 10px;
+      font-size: 1.24rem;
+      letter-spacing: -0.02em;
+    }
+
+    .summary-panel p {
+      margin: 0;
+      color: var(--text-soft);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .muted-divider {
+      height: 1px;
+      margin: 20px 0;
+      background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+    }
+
+    @media (max-width: 1220px) {
+      .layout,
+      .hero-grid,
+      .summary-band {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      .screen-map,
+      .logic-rail,
+      .benefit-grid,
+      .feature-grid,
+      .graph-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .card-grid,
+      .grid-4,
+      .ia-grid,
+      .entity-grid,
+      .risk-grid,
+      .grid-3,
+      .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 780px) {
+      .shell {
+        padding: 18px 16px 46px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .hero h1 {
+        font-size: 2.3rem;
+      }
+
+      .toc {
+        overflow-x: auto;
+      }
+
+      .toc ol {
+        display: flex;
+        gap: 8px;
+        width: max-content;
+        min-width: 100%;
+      }
+
+      .toc a {
+        white-space: nowrap;
+      }
+
+      .card-grid,
+      .grid-4,
+      .grid-3,
+      .grid-2,
+      .stat-grid,
+      .feature-grid,
+      .logic-rail,
+      .rule-grid,
+      .benefit-grid,
+      .ia-grid,
+      .entity-grid,
+      .risk-grid,
+      .screen-map,
+      .graph-row,
+      .split {
+        grid-template-columns: 1fr;
+      }
+
+      .screen-node::after {
+        display: none;
+      }
+
+      .timeline {
+        padding-left: 16px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      .toc a,
+      .chip,
+      .feature-card,
+      .risk-card {
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="hero" id="top">
+      <div class="eyebrow">Product Architecture Guide</div>
+      <div class="hero-grid">
+        <div>
+          <h1>Million Dollar Mirror</h1>
+          <p class="subtitle">
+            A local-first behavioral operating system for daily execution.
+          </p>
+          <p class="summary">
+            This system is a single-user personal operations product that converts day-to-day behavior into
+            structured execution pressure. It combines daily planning, task capture, focused time tracking,
+            project prioritization, money logging, lightweight health and knowledge tracking, and a derived
+            interpretation layer that produces scores, alerts, diagnostics, forecasts, and reset prompts.
+          </p>
+          <div class="tag-row" aria-label="Product type tags">
+            <span class="chip"><strong>Type</strong> Workflow-heavy personal ops system</span>
+            <span class="chip"><strong>Mode</strong> Local-first PWA</span>
+            <span class="chip"><strong>Use</strong> Repeated daily operation</span>
+            <span class="chip"><strong>Pattern</strong> Event-sourced + derived guidance</span>
+            <span class="chip"><strong>Audience</strong> Single self-directed operator</span>
+            <span class="chip"><strong>Surface</strong> Dashboard + execution + analysis</span>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-labelledby="scope-note-title">
+          <h2 id="scope-note-title">Scope note</h2>
+          <p>
+            This page explains the currently implemented product surface and clearly labeled inferences drawn
+            from the codebase. It is not a marketing page and it is not a speculative roadmap.
+          </p>
+          <div class="chip-row" aria-label="Evidence legend">
+            <span class="chip implemented">Implemented in current repo</span>
+            <span class="chip inferred">Strong inference from structure</span>
+            <span class="chip open">Open clarification or unresolved scope</span>
+          </div>
+          <div class="muted-divider"></div>
+          <p class="subtle">
+            Core thesis: the product does not stop at capturing tasks. It interprets behavior, identifies the
+            weakest operating area, and turns drift into explicit recovery actions.
+          </p>
+        </aside>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="toc" aria-label="Section navigation">
+        <h2>On this page</h2>
+        <ol>
+          <li><a href="#glance">1. Product at a Glance</a></li>
+          <li><a href="#problem">2. Core Problem &amp; Solution</a></li>
+          <li><a href="#roles">3. User Types &amp; Role Layers</a></li>
+          <li><a href="#features">4. Feature Architecture</a></li>
+          <li><a href="#logic">5. Functional Logic</a></li>
+          <li><a href="#benefits">6. Benefits by Layer</a></li>
+          <li><a href="#flow">7. System Flow / Lifecycle</a></li>
+          <li><a href="#ia">8. Information Architecture</a></li>
+          <li><a href="#entities">9. Key Entities / Objects</a></li>
+          <li><a href="#risks">10. Notes, Constraints &amp; Risks</a></li>
+          <li><a href="#summary">11. Final Summary</a></li>
+        </ol>
+      </aside>
+
+      <main class="content">
+        <section id="glance" aria-labelledby="glance-title">
+          <div class="section-head">
+            <div class="section-label">Product at a Glance</div>
+            <h2 id="glance-title">The system in one screenful</h2>
+            <p class="section-intro">
+              The product behaves less like a simple productivity app and more like a compact behavioral control
+              system. It tracks what the user planned, what they actually did, how that activity changes the
+              operating state, and what correction the system believes should happen next.
+            </p>
+          </div>
+
+          <div class="stat-grid">
+            <article class="stat-card">
+              <span class="kicker">Primary users</span>
+              <h3>Single self-directed operator</h3>
+              <p>Currently implemented as a one-person system, likely for a founder, builder, or highly structured individual.</p>
+              <div class="chip-row"><span class="chip implemented">Implemented</span><span class="chip inferred">Audience inferred</span></div>
+            </article>
+
+            <article class="stat-card">
+              <span class="kicker">Primary problem solved</span>
+              <h3>Execution drift hidden across multiple life systems</h3>
+              <p>It surfaces where momentum is failing instead of treating tasks, time, money, health, and discipline as separate silos.</p>
+              <div class="metric">Weakest category becomes the forcing function</div>
+            </article>
+
+            <article class="stat-card">
+              <span class="kicker">Main system type</span>
+              <h3>Local-first personal operating model</h3>
+              <p>Runs in the browser, stores data locally, and derives guidance from event history without requiring a backend service.</p>
+              <div class="chip-row"><span class="chip implemented">Local-first</span></div>
+            </article>
+
+            <article class="stat-card">
+              <span class="kicker">Core operating model</span>
+              <h3>Capture → replay → derive → interpret → recover</h3>
+              <p>User actions are turned into events, then summarized into scores, diagnostics, and reset prompts.</p>
+              <div class="metric">Event-sourced daily loop</div>
+            </article>
+
+            <article class="stat-card">
+              <span class="kicker">Complexity level</span>
+              <h3>Medium-high</h3>
+              <p>The product combines data capture, workflow execution, behavioral interpretation, and automation-assisted recovery.</p>
+              <div class="chip-row"><span class="chip inferred">Structural inference</span></div>
+            </article>
+
+            <article class="stat-card">
+              <span class="kicker">Primary value created</span>
+              <h3>Clear next action under pressure</h3>
+              <p>Instead of only recording work, the system keeps translating behavior into what should happen next.</p>
+              <div class="metric">Less ambiguity, faster correction</div>
+            </article>
+          </div>
+        </section>
+
+        <section id="problem" aria-labelledby="problem-title">
+          <div class="section-head">
+            <div class="section-label">Core Problem and Solution</div>
+            <h2 id="problem-title">Why the system exists and how it solves the gap</h2>
+          </div>
+
+          <div class="split">
+            <div class="compare-block">
+              <span class="kicker">Problem</span>
+              <h3>Normal productivity tools do not explain drift</h3>
+              <ul class="list">
+                <li>Task lists capture work items but rarely connect them to health, money, attention, and discipline.</li>
+                <li>Time tools show duration but not whether the time supported the most fragile part of the system.</li>
+                <li>Journals and reviews create reflection, but often too late and without deterministic next steps.</li>
+                <li>Financial logging shows outcomes, not whether the user is applying enough revenue pressure before cash lands.</li>
+              </ul>
+            </div>
+
+            <div class="compare-block">
+              <span class="kicker">Structural solution</span>
+              <h3>One behavioral loop with a derived guidance layer</h3>
+              <ul class="list">
+                <li>The day begins with an explicit mission, emotional state, and non-negotiable commitments.</li>
+                <li>Work, money, health, knowledge, and discipline signals are captured in a shared event stream.</li>
+                <li>The system computes category scores and identifies the weakest operating area.</li>
+                <li>Interpretation layers then produce alerts, diagnostics, reviews, forecasts, and reset actions that feed the next day.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="note-panel" style="margin-top:18px;">
+            <strong>Why this matters:</strong> the product is designed to reduce the distance between behavior and correction.
+            It does not just record activity. It tries to make behavioral failure legible quickly enough that the user can react while the system is still recoverable.
+          </div>
+        </section>
+
+        <section id="roles" aria-labelledby="roles-title">
+          <div class="section-head">
+            <div class="section-label">User Types / Role Layers</div>
+            <h2 id="roles-title">Who this system is built around</h2>
+            <p class="section-intro">
+              The current implementation is not multi-user. Still, the architecture implies several role layers that matter when explaining the system and planning future evolution.
+            </p>
+          </div>
+
+          <div class="card-grid">
+            <article class="role-card">
+              <span class="kicker">Primary role</span>
+              <h3>Personal operator</h3>
+              <p>
+                The main user is the person whose day, work, and behavior are being managed. They open the day,
+                execute, log pressure, and review outcomes.
+              </p>
+              <ul class="list">
+                <li><strong>Needs:</strong> clarity, structure, honest feedback, visible priority.</li>
+                <li><strong>Trying to do:</strong> avoid drift, move meaningful work, protect non-negotiables.</li>
+                <li><strong>Most relevant system areas:</strong> Dashboard, Daily, Projects, Money.</li>
+              </ul>
+              <div class="chip-row"><span class="chip implemented">Implemented</span></div>
+            </article>
+
+            <article class="role-card">
+              <span class="kicker">Invisible support layer</span>
+              <h3>System integrity layer</h3>
+              <p>
+                Not a visible human role, but a real operational layer inside the product. It preserves local
+                state, active timer continuity, event replay, and transaction safety.
+              </p>
+              <ul class="list">
+                <li><strong>Needs:</strong> reliable hydration, rollback on write failures, duplicate protection.</li>
+                <li><strong>Trying to do:</strong> keep guidance trustworthy and state coherent.</li>
+                <li><strong>Most relevant system areas:</strong> persistence, derivation, validation rules.</li>
+              </ul>
+              <div class="chip-row"><span class="chip implemented">Implemented</span></div>
+            </article>
+
+            <article class="role-card">
+              <span class="kicker">Future role possibility</span>
+              <h3>Coach, reviewer, or accountability partner</h3>
+              <p>
+                The language and outputs suggest a product that could eventually support external review or coaching,
+                but no such role exists in the current implementation.
+              </p>
+              <ul class="list">
+                <li><strong>Potential need:</strong> view weekly drift, diagnose patterns, guide recovery.</li>
+                <li><strong>Potential system areas:</strong> review engine, diagnostics, forecast, history.</li>
+                <li><strong>Status:</strong> not implemented, only implied by the behavioral framing.</li>
+              </ul>
+              <div class="chip-row"><span class="chip open">Open scope</span><span class="chip inferred">Strong inference</span></div>
+            </article>
+
+            <article class="role-card">
+              <span class="kicker">Important constraint</span>
+              <h3>No multi-tenant or admin surface today</h3>
+              <p>
+                There are no accounts, orgs, permissions, shared workspaces, or admin views in the present repo.
+                The system should be explained as a single-user product first, not as an unfinished team platform.
+              </p>
+              <ul class="list">
+                <li><strong>Design implication:</strong> current IA can stay personal and day-centric.</li>
+                <li><strong>Communication implication:</strong> avoid implying role complexity that does not exist.</li>
+              </ul>
+              <div class="chip-row"><span class="chip implemented">Implemented constraint</span></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="features" aria-labelledby="features-title">
+          <div class="section-head">
+            <div class="section-label">Feature Architecture</div>
+            <h2 id="features-title">The product organized by functional responsibility</h2>
+            <p class="section-intro">
+              The feature set makes the most sense when grouped by operational role: daily execution, domain-specific
+              engines, interpretation layers, recovery mechanics, and supporting infrastructure.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="feature-group">
+              <div class="feature-group-head">
+                <div>
+                  <span class="kicker">Group 1</span>
+                  <h3>Daily execution loop</h3>
+                </div>
+                <span class="chip implemented">Central implemented surface</span>
+              </div>
+
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Morning Check-in</h3>
+                  <p>Opens the day with energy, anxiety, mission, non-negotiables, and a target count.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> creates or updates the current daily log and emits a check-in event.</div>
+                    <div><strong>Why it matters:</strong> sets the frame for what “today” means and feeds discipline, mind, and health-related scoring inputs.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow role:</strong> start-of-day anchor.</div>
+                    <div><strong>Dependencies:</strong> hydration must complete first.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Task Board</h3>
+                  <p>Captures actionable work for the day, with category tagging, optional project linkage, and completion state.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> creates daily tasks and records completion events.</div>
+                    <div><strong>Why it matters:</strong> converts abstract pressure into executable units and feeds category performance.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow role:</strong> main execution surface.</div>
+                    <div><strong>Dependencies:</strong> UI expects today to be open before manual add.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Quick Logs + Focus Timer</h3>
+                  <p>Provides low-friction evidence for exercise, substance-free behavior, medical compliance, and focused work time.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> records binary quick logs, starts and stops a single active timer, and persists focused minutes.</div>
+                    <div><strong>Why it matters:</strong> gives the system proof of activity without large forms.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow role:</strong> mid-day behavioral capture.</div>
+                    <div><strong>Dependencies:</strong> one active timer at a time.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Evening Review</h3>
+                  <p>Closes the day with notes and a count of completed non-negotiables.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> updates the daily log, emits a day-review event, and strengthens the review and discipline layers.</div>
+                    <div><strong>Why it matters:</strong> gives the system an explicit closeout instead of leaving the day structurally open.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow role:</strong> end-of-day reconciliation.</div>
+                    <div><strong>Dependencies:</strong> requires an existing daily log.</div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="feature-group">
+              <div class="feature-group-head">
+                <div>
+                  <span class="kicker">Group 2</span>
+                  <h3>Domain engines</h3>
+                </div>
+                <span class="chip implemented">Operational modules</span>
+              </div>
+
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Project Engine</h3>
+                  <p>Maintains a ranked stack of projects based on urgency and income weight, with active, blocked, and shipped states.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> create project, update status, raise urgency, queue today’s move, start a project-linked focus block.</div>
+                    <div><strong>Benefit:</strong> keeps work selection tied to leverage instead of random task accumulation.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow relevance:</strong> supports the projects category and shipping signal.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Money Engine</h3>
+                  <p>Combines revenue-pressure actions with actual cash logging.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> queue revenue tasks, record income, expense, and debt payments.</div>
+                    <div><strong>Benefit:</strong> distinguishes between effort that pushes revenue and realized money that already landed.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow relevance:</strong> supports money scoring, survival pressure, and diagnostics.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Book Engine</h3>
+                  <p>Tracks active books, page goals, and daily reading progress.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> create book, define daily page target, log progress.</div>
+                    <div><strong>Benefit:</strong> keeps knowledge accumulation operational rather than aspirational.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow relevance:</strong> supports the knowledge score.</div>
+                    <div><strong>Status:</strong> implemented, but secondary in current product hierarchy.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Health Detail</h3>
+                  <p>Captures weight, sleep, medical compliance, and an optional note.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> save health log with sanitized numeric inputs.</div>
+                    <div><strong>Benefit:</strong> connects physical stability to execution quality.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Workflow relevance:</strong> supports health scoring and recovery interpretation.</div>
+                    <div><strong>Status:</strong> implemented, but not yet elevated to its own major section.</div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="feature-group">
+              <div class="feature-group-head">
+                <div>
+                  <span class="kicker">Group 3</span>
+                  <h3>Interpretation layer</h3>
+                </div>
+                <span class="chip implemented">Derived guidance</span>
+              </div>
+
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Score Snapshot + Priority Focus</h3>
+                  <p>Computes seven category scores and a life score, then identifies the weakest operating area.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> turns summaries into a ranked pressure model.</div>
+                    <div><strong>Why it matters:</strong> creates a single “controlling” category instead of competing priorities.</div>
+                    <div><strong>Users affected:</strong> primary operator.</div>
+                    <div><strong>Dependencies:</strong> event replay and daily summary construction.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Alerts + Nudges</h3>
+                  <p>Flags collapse risk, inactivity, non-negotiable failure, and priority instability.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> create human-readable warning states and short mentor-style nudges.</div>
+                    <div><strong>Benefit:</strong> surfaces trouble as a visible operating condition, not as an abstract score decline.</div>
+                    <div><strong>Workflow relevance:</strong> triage and immediate interpretation.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Diagnostics + Recommendations</h3>
+                  <p>Explains why the user is stuck and proposes action aligned to the source of drift.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> classify issues such as revenue avoidance, project stagnation, or time misallocation.</div>
+                    <div><strong>Benefit:</strong> replaces vague self-judgment with named constraints.</div>
+                    <div><strong>Dependencies:</strong> score history, time breakdown, reviews, project priorities.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Forecast + Adaptive Mentor Brief</h3>
+                  <p>Projects near-term readiness and produces a condensed pressure summary.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> estimates collapse risk, projected life score, and at-risk categories.</div>
+                    <div><strong>Why it matters:</strong> gives the user a forward-looking reason to intervene now.</div>
+                    <div><strong>Workflow relevance:</strong> supports triage, not just historical review.</div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="feature-group">
+              <div class="feature-group-head">
+                <div>
+                  <span class="kicker">Group 4</span>
+                  <h3>Recovery and automation layer</h3>
+                </div>
+                <span class="chip implemented">Assisted correction</span>
+              </div>
+
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Prepared Resets + Automation Triggers</h3>
+                  <p>Arms structured reset suggestions for the areas most likely to continue failing.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> suggests non-negotiables and a reset mission tied to priority, diagnostics, and forecast risk.</div>
+                    <div><strong>Why it matters:</strong> makes recovery preparation explicit before the next day starts.</div>
+                    <div><strong>Workflow relevance:</strong> bridge between interpretation and next action.</div>
+                    <div><strong>Important note:</strong> this is preparation, not full autopilot.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Review Command Loop</h3>
+                  <p>Builds today’s action set from the latest priority, diagnostics, automation triggers, and review drift.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> can apply the top reset and queue missing non-negotiables into today.</div>
+                    <div><strong>Why it matters:</strong> compresses interpretation into direct execution.</div>
+                    <div><strong>Dependencies:</strong> live review state plus available trigger data.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>XP, Streak, Penalty Debt, Comeback</h3>
+                  <p>Tracks reinforcement, missed-day penalties, and accelerated recovery after gaps.</p>
+                  <div class="feature-meta">
+                    <div><strong>Key functions:</strong> award XP for real operating behavior, penalize ignored focus, activate comeback multiplier after a lapse.</div>
+                    <div><strong>Benefit:</strong> makes continuity and recovery legible, not just outcome quality.</div>
+                    <div><strong>Workflow relevance:</strong> motivation and recovery framing.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Priority-aware task seeding</h3>
+                  <p>New tasks and resets can be aligned to the currently weakest category instead of being neutral by default.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> keeps the board biased toward corrective action.</div>
+                    <div><strong>Why it matters:</strong> reduces the chance that the user fills the day with non-relevant work.</div>
+                    <div><strong>Dependencies:</strong> current priority focus and automation logic.</div>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div class="feature-group">
+              <div class="feature-group-head">
+                <div>
+                  <span class="kicker">Group 5</span>
+                  <h3>Supporting infrastructure</h3>
+                </div>
+                <span class="chip implemented">Hidden but UI-relevant</span>
+              </div>
+
+              <div class="feature-grid">
+                <article class="feature-card">
+                  <h3>Local persistence + hydration gate</h3>
+                  <p>The app blocks on hydration before showing the routed interface.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> restores records and active timer state from Dexie/local storage.</div>
+                    <div><strong>Why it matters:</strong> prevents guidance from rendering on stale or partial state.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Event replay + derived state pipeline</h3>
+                  <p>Ordered events are replayed into daily summaries, then transformed into scores and higher-order guidance.</p>
+                  <div class="feature-meta">
+                    <div><strong>What it does:</strong> keeps interpretation deterministic and reconstructable.</div>
+                    <div><strong>Why it matters:</strong> separates raw action capture from meaning.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Validation + dedupe rules</h3>
+                  <p>The system protects itself from normalized duplicates, invalid money values, invalid health numbers, and duplicate task creation.</p>
+                  <div class="feature-meta">
+                    <div><strong>Benefit:</strong> reduces accidental state corruption.</div>
+                    <div><strong>UX implication:</strong> some invalid actions are ignored silently, which creates a communication challenge.</div>
+                  </div>
+                </article>
+
+                <article class="feature-card">
+                  <h3>Transaction rollback safety</h3>
+                  <p>When a primary record and its matching event should be written together, the store uses transaction boundaries and rollback behavior.</p>
+                  <div class="feature-meta">
+                    <div><strong>Why it matters:</strong> keeps the behavioral model and visible records in sync.</div>
+                    <div><strong>Workflow relevance:</strong> trustworthiness of all higher-order outputs.</div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="logic" aria-labelledby="logic-title">
+          <div class="section-head">
+            <div class="section-label">Functional Logic / How the System Works</div>
+            <h2 id="logic-title">The mechanics underneath the interface</h2>
+            <p class="section-intro">
+              The product is easiest to understand when viewed as a five-stage loop: capture, persist, measure,
+              interpret, and recover. The UI is the visible layer of that loop, not the whole system.
+            </p>
+          </div>
+
+          <div class="logic-rail">
+            <article class="logic-card">
+              <div class="step">1</div>
+              <h3>Capture</h3>
+              <p>The user opens the day, adds tasks, logs quick wins, starts timers, updates projects, records money, and adds health or reading signals.</p>
+            </article>
+            <article class="logic-card">
+              <div class="step">2</div>
+              <h3>Persist</h3>
+              <p>Each meaningful action writes a primary record and appends an event so the day can be reconstructed and audited by behavior.</p>
+            </article>
+            <article class="logic-card">
+              <div class="step">3</div>
+              <h3>Measure</h3>
+              <p>Events are replayed into daily summaries: focus minutes, non-negotiable completion, money totals, reading progress, health signals, and more.</p>
+            </article>
+            <article class="logic-card">
+              <div class="step">4</div>
+              <h3>Interpret</h3>
+              <p>Scores, rolling windows, alerts, diagnostics, reviews, forecast, and mentor guidance are derived from the latest state.</p>
+            </article>
+            <article class="logic-card">
+              <div class="step">5</div>
+              <h3>Recover</h3>
+              <p>The system prepares resets, suggests recovery actions, and can seed today’s board from review pressure instead of leaving correction manual.</p>
+            </article>
+          </div>
+
+          <div class="rule-grid">
+            <article class="logic-card">
+              <span class="kicker">Strict dependencies</span>
+              <h3>What must happen before something else</h3>
+              <ul class="list">
+                <li>Hydration must complete before the routed interface is shown.</li>
+                <li>A timer must start before it can stop and persist a time log.</li>
+                <li>Daily manual task creation in the Daily screen expects a current daily log.</li>
+                <li>Closing the day requires that the day already exists.</li>
+              </ul>
+            </article>
+
+            <article class="logic-card">
+              <span class="kicker">Out-of-order behavior</span>
+              <h3>What can happen independently</h3>
+              <ul class="list">
+                <li>Projects, money entries, books, and health logs can be created without a formal onboarding sequence.</li>
+                <li>Some supporting actions can auto-create today if needed through the store layer.</li>
+                <li>Review, forecast, and diagnostics are always recomputed from current state after mutations.</li>
+              </ul>
+            </article>
+
+            <article class="logic-card">
+              <span class="kicker">Automated rules</span>
+              <h3>What the system handles for the user</h3>
+              <ul class="list">
+                <li>Daily summaries and score derivation.</li>
+                <li>Priority focus selection based on weakest category.</li>
+                <li>Alert, diagnostic, recommendation, and forecast creation.</li>
+                <li>Duplicate-safe task and reset handling.</li>
+                <li>Cross-midnight time splitting and comeback-state detection.</li>
+              </ul>
+            </article>
+
+            <article class="logic-card">
+              <span class="kicker">Manual steps</span>
+              <h3>What still relies on explicit user intent</h3>
+              <ul class="list">
+                <li>Applying a prepared reset.</li>
+                <li>Priming the command loop into today’s tasks.</li>
+                <li>Choosing project status changes.</li>
+                <li>Logging money, health, and reading progress.</li>
+                <li>Closing the day honestly instead of leaving it structurally open.</li>
+              </ul>
+            </article>
+
+            <article class="logic-card">
+              <span class="kicker">Validation and state changes</span>
+              <h3>Protective logic that shapes UX</h3>
+              <ul class="list">
+                <li>Duplicate tasks are blocked by normalized title per day.</li>
+                <li>Project weights clamp into a supported range.</li>
+                <li>Negative money values are rejected.</li>
+                <li>Non-finite health inputs are sanitized away.</li>
+                <li>Only one active timer can exist at a time.</li>
+              </ul>
+            </article>
+
+            <article class="logic-card">
+              <span class="kicker">Sensitive points</span>
+              <h3>Actions that need extra communication clarity</h3>
+              <ul class="list">
+                <li>Task completion appears effectively one-way in the UI.</li>
+                <li>Automation is additive and not explicitly undoable.</li>
+                <li>Some protected actions fail silently instead of giving user-facing feedback.</li>
+                <li>The user may not understand why some flows auto-create “today” while others do not.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section id="benefits" aria-labelledby="benefits-title">
+          <div class="section-head">
+            <div class="section-label">Benefits by Layer</div>
+            <h2 id="benefits-title">What value each layer creates</h2>
+          </div>
+
+          <div class="benefit-grid">
+            <article class="benefit-card">
+              <span class="kicker">User benefits</span>
+              <h3>Clearer daily control</h3>
+              <ul class="list">
+                <li>Turns vague pressure into a mission and protected non-negotiables.</li>
+                <li>Shows one dominant weakness instead of many competing priorities.</li>
+                <li>Connects daily behavior to visible operating consequences.</li>
+              </ul>
+            </article>
+
+            <article class="benefit-card">
+              <span class="kicker">Operational benefits</span>
+              <h3>Faster recovery from drift</h3>
+              <ul class="list">
+                <li>Diagnostics explain why the system is slipping.</li>
+                <li>Prepared resets and command loops shorten the distance between insight and action.</li>
+                <li>Project and money activity stay tied to the same operating model.</li>
+              </ul>
+            </article>
+
+            <article class="benefit-card">
+              <span class="kicker">System benefits</span>
+              <h3>Deterministic interpretation</h3>
+              <ul class="list">
+                <li>Event replay makes scores and guidance reconstructable.</li>
+                <li>Validation rules reduce accidental drift in stored state.</li>
+                <li>Local-first persistence keeps the app available without a backend dependency.</li>
+              </ul>
+            </article>
+
+            <article class="benefit-card">
+              <span class="kicker">Risk-reduction benefits</span>
+              <h3>Earlier visibility into failure modes</h3>
+              <ul class="list">
+                <li>Inactivity and weak-category alerts surface issues before the week fully collapses.</li>
+                <li>Forecasting turns trend decay into visible near-term risk.</li>
+                <li>Review carry-forward reduces the chance that lessons stay trapped in reflection.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div class="note-panel" style="margin-top:18px;">
+            <strong>Commercial or business value:</strong> not explicitly defined in the current source material.
+            If productized, the strongest inferred value is a high-retention personal operations product that
+            differentiates by connecting capture, diagnosis, and recovery in one loop.
+            <div class="chip-row" style="margin-top:12px;"><span class="chip inferred">Business value inferred</span></div>
+          </div>
+        </section>
+
+        <section id="flow" aria-labelledby="flow-title">
+          <div class="section-head">
+            <div class="section-label">System Flow / Lifecycle</div>
+            <h2 id="flow-title">How the operating cycle moves across a day and beyond</h2>
+          </div>
+
+          <div class="timeline">
+            <article class="flow-step" data-step="1">
+              <h3>Launch and hydrate</h3>
+              <p>The app restores local records and any active timer state before showing the routed product surface.</p>
+            </article>
+
+            <article class="flow-step" data-step="2">
+              <h3>Open the day</h3>
+              <p>The user completes a morning check-in, or the system creates today implicitly when a queued reset or task demands a day container.</p>
+            </article>
+
+            <article class="flow-step" data-step="3">
+              <h3>Define the operating contract</h3>
+              <p>Mission, emotional state, and non-negotiables create the standard the rest of the day will be measured against.</p>
+            </article>
+
+            <article class="flow-step" data-step="4">
+              <h3>Execute and record proof</h3>
+              <p>Tasks, timer blocks, revenue actions, money entries, health logs, and book progress all become evidence of what actually happened.</p>
+            </article>
+
+            <article class="flow-step" data-step="5">
+              <h3>Derive the current operating state</h3>
+              <p>Scores, weak-category pressure, alerts, reviews, diagnostics, and forecast are recomputed from the latest event-backed state.</p>
+            </article>
+
+            <article class="flow-step" data-step="6">
+              <h3>Close the day honestly</h3>
+              <p>The evening review confirms what was actually protected and adds narrative context to the operating record.</p>
+            </article>
+
+            <article class="flow-step" data-step="7">
+              <h3>Translate interpretation into recovery</h3>
+              <p>The system prepares resets, proposes next actions, and offers a command loop to seed tomorrow’s corrective work.</p>
+            </article>
+
+            <article class="flow-step" data-step="8">
+              <h3>Carry the week and month forward</h3>
+              <p>Review snapshots compare periods, flag wins or decline, and influence which category receives the next round of pressure.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="ia" aria-labelledby="ia-title">
+          <div class="section-head">
+            <div class="section-label">Information Architecture / Major Sections</div>
+            <h2 id="ia-title">How the product is structurally divided today</h2>
+            <p class="section-intro">
+              The present IA is organized around operating mode, not around pure data types. This makes sense for a personal ops product, but it also concentrates many advanced ideas into the “More” area.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="screen-map" aria-label="Current top-level sections">
+              <article class="screen-node">
+                <span class="kicker">Current section</span>
+                <h3>Dashboard</h3>
+                <p>Compressed readiness view: life score, weakest category, alerts, forecast snapshot, project ranking, and reset prompts.</p>
+              </article>
+
+              <article class="screen-node">
+                <span class="kicker">Current section</span>
+                <h3>Daily</h3>
+                <p>Main execution surface for check-in, quick logs, timer, tasks, reset application, command-loop priming, and day closeout.</p>
+              </article>
+
+              <article class="screen-node">
+                <span class="kicker">Current section</span>
+                <h3>Projects</h3>
+                <p>Project stack organized by urgency and income leverage, with lightweight status updates and action seeding.</p>
+              </article>
+
+              <article class="screen-node">
+                <span class="kicker">Current section</span>
+                <h3>Money</h3>
+                <p>Operational money view focused on revenue pressure, cash movement capture, and money-state visibility.</p>
+              </article>
+
+              <article class="screen-node">
+                <span class="kicker">Current section</span>
+                <h3>More</h3>
+                <p>Analysis hub for forecast, diagnostics, reviews, recommendations, automation, books, and health.</p>
+              </article>
+            </div>
+
+            <div class="muted-divider"></div>
+
+            <div class="ia-grid">
+              <article class="ia-card">
+                <span class="kicker">Structural strength</span>
+                <h3>Day-centric navigation</h3>
+                <p>The current structure keeps the operating loop legible: read the state, open the day, move projects and money, then inspect the deeper analysis layer.</p>
+              </article>
+
+              <article class="ia-card">
+                <span class="kicker">Structural pressure point</span>
+                <h3>“More” is carrying too many jobs</h3>
+                <p>It currently behaves as analysis console, recovery console, health screen, and knowledge screen at the same time.</p>
+              </article>
+
+              <article class="ia-card">
+                <span class="kicker">Likely future split</span>
+                <h3>History, settings, and detail views</h3>
+                <p>There is no dedicated history, audit, export, or settings layer yet, but the model already justifies those surfaces.</p>
+                <div class="chip-row"><span class="chip open">Future / not implemented</span></div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="entities" aria-labelledby="entities-title">
+          <div class="section-head">
+            <div class="section-label">Key Entities / Objects</div>
+            <h2 id="entities-title">The main things inside the system and how they relate</h2>
+          </div>
+
+          <div class="entity-grid">
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Daily Log</h3>
+              <p>Represents the day’s mission, emotional state, non-negotiables, target, closeout notes, and completion count.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Task</h3>
+              <p>Represents executable work for a specific day, optionally linked to a project and marked as non-negotiable.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Project</h3>
+              <p>Represents a meaningful work stream ranked by urgency and income potential, with active, blocked, and shipped states.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Time Log / Active Timer</h3>
+              <p>Represents focused time, category allocation, and optional project-linked work sessions.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Money Log</h3>
+              <p>Represents an income, expense, or debt payment entry used for operational money state.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Book</h3>
+              <p>Represents an active reading object with page totals, current progress, and a daily pace target.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Core record</span>
+              <h3>Health Log</h3>
+              <p>Represents a daily health detail entry with optional sleep, weight, compliance, and note data.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">System object</span>
+              <h3>Event</h3>
+              <p>Represents the behavioral history the product replays to build summaries and guidance.</p>
+            </article>
+
+            <article class="entity-card">
+              <span class="kicker">Derived layer</span>
+              <h3>Guidance objects</h3>
+              <p>Includes scores, alerts, nudges, diagnostics, recommendations, forecast, reviews, automation triggers, and XP state.</p>
+            </article>
+          </div>
+
+          <div class="panel" style="margin-top:18px;">
+            <span class="kicker">Relationship view</span>
+            <h3 style="margin-top:0;">How the object model fits together</h3>
+
+            <div class="entity-graph" aria-label="Object relationship map">
+              <div class="graph-row">
+                <div class="graph-node">
+                  <h4>Daily Log</h4>
+                  <p>Anchors the day and its review state.</p>
+                </div>
+                <div class="graph-node">
+                  <h4>Task</h4>
+                  <p>Belongs to a daily log and may reference a project.</p>
+                </div>
+                <div class="graph-node">
+                  <h4>Project</h4>
+                  <p>Can be linked from tasks and timers.</p>
+                </div>
+                <div class="graph-node">
+                  <h4>Time Log</h4>
+                  <p>Tracks focused work by category and project.</p>
+                </div>
+              </div>
+
+              <div class="graph-row">
+                <div class="graph-node">
+                  <h4>Money Log</h4>
+                  <p>Feeds money performance and survival pressure.</p>
+                </div>
+                <div class="graph-node">
+                  <h4>Book</h4>
+                  <p>Feeds the knowledge system.</p>
+                </div>
+                <div class="graph-node">
+                  <h4>Health Log</h4>
+                  <p>Feeds physical stability inputs.</p>
+                </div>
+                <div class="graph-node center">
+                  <h4>Event Stream</h4>
+                  <p>Canonical behavioral record used for replay and derivation.</p>
+                </div>
+              </div>
+
+              <div class="graph-row">
+                <div class="graph-node center">
+                  <h4>Daily summaries</h4>
+                  <p>Normalize raw events into measurable daily metrics.</p>
+                </div>
+                <div class="graph-node center">
+                  <h4>Scores + reviews</h4>
+                  <p>Translate summaries into readiness and trend memory.</p>
+                </div>
+                <div class="graph-node center">
+                  <h4>Diagnostics + forecast</h4>
+                  <p>Explain what is failing and what could fail next.</p>
+                </div>
+                <div class="graph-node center">
+                  <h4>Guidance + resets</h4>
+                  <p>Return to the user as actions, warnings, and recovery prompts.</p>
+                </div>
+              </div>
+            </div>
+
+            <p class="footer-note">
+              In plain language: the system records what happened, reconstructs what it means, and then pushes that meaning back into the next day.
+            </p>
+          </div>
+        </section>
+
+        <section id="risks" aria-labelledby="risks-title">
+          <div class="section-head">
+            <div class="section-label">Important Notes / Constraints / Risks</div>
+            <h2 id="risks-title">Where the product is most sensitive</h2>
+            <p class="section-intro">
+              The biggest risks are not visual. They are structural: guidance overlap, unclear attribution, overloaded analysis surfaces, and silent protective logic that may confuse users if not explained cleanly.
+            </p>
+          </div>
+
+          <div class="risk-grid">
+            <article class="risk-card">
+              <span class="kicker">Hierarchy risk</span>
+              <h3>Too many “next action” layers</h3>
+              <p>Priority focus, alerts, nudges, diagnostics, recommendations, prepared resets, automation triggers, and command loops all point toward action. Their relationship must stay explicit.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Navigation risk</span>
+              <h3>The “More” section is overloaded</h3>
+              <p>Forecasting, reviews, diagnostics, automation, books, and health all live in one place, mixing analysis with data-entry surfaces.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">State visibility risk</span>
+              <h3>Protective logic is sometimes invisible</h3>
+              <p>Duplicates, invalid values, and blocked actions are often ignored safely rather than explained clearly to the user.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Workflow risk</span>
+              <h3>Today is not created consistently across all surfaces</h3>
+              <p>Some flows require an explicit check-in while others can create today implicitly. That distinction needs careful communication.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Trust risk</span>
+              <h3>The language is strong and behaviorally coercive</h3>
+              <p>Terms like collapse, avoidance, and pressure can feel powerful, but they require transparent framing to remain credible and useful.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Editability risk</span>
+              <h3>No clear undo or full history management yet</h3>
+              <p>Money logs, health entries, books, and many actions do not currently expose a rich correction path in the UI.</p>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Scope ambiguity</span>
+              <h3>Books and health may be core or may be satellites</h3>
+              <p>The system includes them today, but the current hierarchy does not prove whether they belong as equal pillars beside Projects and Money.</p>
+              <div class="chip-row"><span class="chip open">Needs product clarification</span></div>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Platform evolution risk</span>
+              <h3>Multi-user, sync, and settings are undefined</h3>
+              <p>The codebase is clearly single-user local-first today. Any shift toward coaching, team review, or cloud sync changes the IA significantly.</p>
+              <div class="chip-row"><span class="chip open">Not defined in source</span></div>
+            </article>
+
+            <article class="risk-card">
+              <span class="kicker">Mobile readability risk</span>
+              <h3>Dense, long-form analytical content can become fatiguing</h3>
+              <p>The current conceptual model contains enough detail that mobile layouts need ruthless hierarchy and compression to stay usable.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="summary" aria-labelledby="summary-title">
+          <div class="section-head">
+            <div class="section-label">Final Summary</div>
+            <h2 id="summary-title">What this system is, and what the reader should now understand</h2>
+          </div>
+
+          <div class="summary-band">
+            <div class="summary-panel">
+              <h3>System takeaway</h3>
+              <p>
+                Million Dollar Mirror is a day-centric, local-first personal operations product that tries to make
+                behavior measurable, explainable, and correctable. It combines direct execution surfaces with a
+                derived interpretation engine so the user is not left to manually connect raw activity to actual
+                operating condition.
+              </p>
+              <div class="muted-divider"></div>
+              <p>
+                Its distinguishing structure is not any single screen. It is the full loop: open the day, capture
+                evidence, derive meaning, identify the weakest system, and turn that diagnosis into reset pressure
+                for the next move.
+              </p>
+            </div>
+
+            <div class="summary-panel">
+              <h3>Reader takeaway</h3>
+              <ul class="list">
+                <li>This is not a generic productivity tool; it is a behavioral operating model.</li>
+                <li>The product is currently single-user, local-first, and strongly focused on repeated daily use.</li>
+                <li>Its core strength is the connection between capture, interpretation, and recovery.</li>
+                <li>Its main design sensitivity is keeping all guidance layers legible without overwhelming the user.</li>
+              </ul>
+            </div>
+          </div>
+
+          <p class="footer-note">
+            If this page has done its job, the reader should now understand what the product is, what each major
+            part does, why those parts exist, and how the full system fits together as one operating loop.
+          </p>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const links = Array.from(document.querySelectorAll('.toc a'));
+      const sections = links
+        .map((link) => document.querySelector(link.getAttribute('href')))
+        .filter(Boolean);
+
+      if (!sections.length) return;
+
+      let activeId = '';
+      let ticking = false;
+
+      const setActive = (id) => {
+        if (!id || id === activeId) return;
+        activeId = id;
+
+        links.forEach((link) => {
+          const isActive = link.getAttribute('href') === `#${id}`;
+          link.classList.toggle('is-active', isActive);
+
+          if (isActive) {
+            link.setAttribute('aria-current', 'true');
+          } else {
+            link.removeAttribute('aria-current');
+          }
+        });
+      };
+
+      const getCurrentSection = () => {
+        const viewportTrigger = Math.min(window.innerHeight * 0.32, 260);
+        let current = sections[0];
+
+        for (const section of sections) {
+          const rect = section.getBoundingClientRect();
+
+          if (rect.top <= viewportTrigger) {
+            current = section;
+          } else {
+            break;
+          }
+        }
+
+        const lastSection = sections[sections.length - 1];
+        const docBottom = window.innerHeight + window.scrollY;
+        const pageBottom = document.documentElement.scrollHeight - 4;
+
+        if (docBottom >= pageBottom) {
+          return lastSection;
+        }
+
+        return current;
+      };
+
+      const updateActiveSection = () => {
+        const current = getCurrentSection();
+        if (current) setActive(current.id);
+      };
+
+      const requestUpdate = () => {
+        if (ticking) return;
+        ticking = true;
+
+        window.requestAnimationFrame(() => {
+          updateActiveSection();
+          ticking = false;
+        });
+      };
+
+      updateActiveSection();
+      window.addEventListener('scroll', requestUpdate, { passive: true });
+      window.addEventListener('resize', requestUpdate);
+      window.addEventListener('load', requestUpdate);
+      window.addEventListener('hashchange', requestUpdate);
+    }());
+  </script>
+</body>
+</html>
