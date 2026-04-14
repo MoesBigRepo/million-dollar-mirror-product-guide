@@ -37,7 +37,8 @@ Core thesis: the product does not stop at capturing tasks. It interprets behavio
 - [8. Information Architecture](#ia)
 - [9. Key Entities / Objects](#entities)
 - [10. Notes, Constraints & Risks](#risks)
-- [11. Final Summary](#summary)
+- [11. Not a Developer Version](#plain-english)
+- [12. Final Summary](#summary)
 
 *Product at a Glance*
 
@@ -679,7 +680,7 @@ Explain what is failing and what could fail next.
 
 Return to the user as actions, warnings, and recovery prompts.
 
-In plain language: the system records what happened, reconstructs what it means, and then pushes that meaning back into the next day.
+In plain language: the system sees what you did, figures out what it means, and uses that to shape your next day.
 
 *Important Notes / Constraints / Risks*
 
@@ -745,15 +746,83 @@ The codebase is clearly single-user local-first today. Any shift toward coaching
 
 The current conceptual model contains enough detail that mobile layouts need ruthless hierarchy and compression to stay usable.
 
+*Not a Developer Version*
+
+## The simple version in everyday language
+
+This part is written for someone who does not build software. It keeps the idea simple, concrete, and easy to explain back.
+
+*What it is*
+
+### A tool that helps you run your day
+
+Million Dollar Mirror helps you see what you planned, what you really did, and what you need to fix next.
+
+*What it watches*
+
+### Your real life, not just your to-do list
+
+It looks at work, time, money, health, learning, and discipline so you can see where things are slipping.
+
+*How it works*
+
+### You log your day and the app reads the pattern
+
+You check in, do tasks, track focus time, log money and health, and the app turns that into a simple picture of how your day is going.
+
+*What makes it different*
+
+### It does more than store information
+
+Most apps just save notes and tasks. This one also tries to tell you where you are weak and what needs attention first.
+
+*The 5-step loop*
+
+### How the product works in plain English
+
+#### 1. Start the day
+
+You open the day and decide what matters most.
+
+#### 2. Log what happens
+
+You track your tasks, focused work, money, health, and progress.
+
+#### 3. See the pattern
+
+The app looks at your actions and finds the part of life that needs the most help.
+
+#### 4. Get a warning
+
+If you are slipping, the app points it out instead of letting the problem stay hidden.
+
+#### 5. Fix the next move
+
+The app helps you choose the next action so tomorrow is stronger than today.
+
+### What the main screens mean
+
+- Dashboard: shows how you are doing right now.
+- Daily: where you run the day.
+- Projects: where you manage your bigger work.
+- Money: where you track cash activity.
+- More: where deeper review and extra tools live.
+
+### One-sentence takeaway
+
+This is a personal control system that helps you catch slippage early, understand what is going wrong, and take the right next step.
+
+In the simplest terms: it helps you stop lying to yourself about your day.
+
 *Final Summary*
 
 ## What this system is, and what the reader should now understand
 
 ### System takeaway
 
-Million Dollar Mirror is a day-centric, local-first personal operations product that tries to make behavior measurable, explainable, and correctable. It combines direct execution surfaces with a derived interpretation engine so the user is not left to manually connect raw activity to actual operating condition.
+Million Dollar Mirror is a day-centered, local-first personal operating product. It helps the user track what happened, understand what it means, and decide what to fix next without having to piece everything together by hand.
 
-Its distinguishing structure is not any single screen. It is the full loop: open the day, capture evidence, derive meaning, identify the weakest system, and turn that diagnosis into reset pressure for the next move.
+What makes it different is the full loop: open the day, record what happened, find the weakest area, and turn that diagnosis into a corrective next move.
 
 ### Reader takeaway
 
@@ -762,4 +831,4 @@ Its distinguishing structure is not any single screen. It is the full loop: open
 - Its core strength is the connection between capture, interpretation, and recovery.
 - Its main design sensitivity is keeping all guidance layers legible without overwhelming the user.
 
-If this page has done its job, the reader should now understand what the product is, what each major part does, why those parts exist, and how the full system fits together as one operating loop.
+If this page has done its job, the reader should now understand what the product is, what each major part does, why those parts exist, and how the full system works as one loop.
