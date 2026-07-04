@@ -1,0 +1,12 @@
+node_modules/
+.venv/
+venv/
+browsers/
+dist/
+.next/
+__pycache__/
+ocr_cache/
+.env
+.env.*
+*.log
+.DS_Store
